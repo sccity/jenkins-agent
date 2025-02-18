@@ -1,0 +1,41 @@
+FROM sccity/jenkins-agent:1.0.0
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+USER root
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    ca-certificates \
+    lsb-release \
+    gnupg2 \
+    curl \
+    build-essential \
+    zlib1g-dev \
+    libffi-dev \
+    libssl-dev \
+    libsqlite3-dev \
+    libbz2-dev \
+    libncurses5-dev \
+    libgdbm-dev \
+    libnss3-dev \
+    libreadline-dev \
+    liblzma-dev \
+    mariadb-server \ 
+    mariadb-client \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -O https://www.python.org/ftp/python/3.10.12/Python-3.10.12.tgz \
+    && tar -xvf Python-3.10.12.tgz \
+    && cd Python-3.10.12 \
+    && ./configure --enable-optimizations \
+    && make -j$(nproc) \
+    && make altinstall \
+    && cd .. \
+    && rm -rf Python-3.10.12 Python-3.10.12.tgz
+
+RUN echo "root:development" | chpasswd
+
+USER jenkins
+
+ENTRYPOINT ["/usr/local/bin/jenkins-agent"]

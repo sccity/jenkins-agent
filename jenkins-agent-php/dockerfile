@@ -1,0 +1,45 @@
+FROM sccity/jenkins-agent:1.0.0
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+USER root
+
+RUN apt-get update && apt-get install -y \
+    lsb-release \
+    ca-certificates \
+    apt-transport-https \
+    software-properties-common \
+    gnupg2 \
+    curl \
+    unzip \
+    git \
+    mariadb-server \ 
+    mariadb-client
+
+RUN curl -fsSL https://packages.sury.org/php/apt.gpg | tee /etc/apt/trusted.gpg.d/php.gpg > /dev/null && \
+    echo "deb https://packages.sury.org/php $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/php.list > /dev/null && \
+    apt-get update
+
+RUN apt-get install -y \
+    php8.2 \
+    php8.2-cli \
+    php8.2-common \
+    php8.2-mbstring \
+    php8.2-xml \
+    php8.2-curl \
+    php8.2-zip \
+    php8.2-gd \
+    php8.2-mysql
+
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN echo "root:development" | chpasswd
+
+USER jenkins
+
+ENTRYPOINT ["/usr/local/bin/jenkins-agent"]
