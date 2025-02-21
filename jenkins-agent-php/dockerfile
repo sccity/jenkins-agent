@@ -1,6 +1,7 @@
 FROM sccity/jenkins-agent:1.0.0
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV ACCEPT_EULA=Y
 
 USER root
 
@@ -14,7 +15,9 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     mariadb-server \ 
-    mariadb-client
+    mariadb-client \
+    yq \
+    gpg
 
 RUN curl -fsSL https://packages.sury.org/php/apt.gpg | tee /etc/apt/trusted.gpg.d/php.gpg > /dev/null && \
     echo "deb https://packages.sury.org/php $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/php.list > /dev/null && \
@@ -29,7 +32,19 @@ RUN apt-get install -y \
     php8.2-curl \
     php8.2-zip \
     php8.2-gd \
-    php8.2-mysql
+    php8.2-mysql \
+    php8.2-dev
+
+RUN apt-get update && apt-get install -y gnupg2
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - 
+RUN curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list > /etc/apt/sources.list.d/mssql-release.list 
+RUN apt-get update 
+RUN ACCEPT_EULA=Y apt-get -y --no-install-recommends install msodbcsql17 unixodbc-dev 
+RUN pecl install sqlsrv
+RUN pecl install pdo_sqlsrv
+RUN echo "extension=sqlsrv.so" > /etc/php/8.2/mods-available/sqlsrv.ini && \
+    echo "extension=pdo_sqlsrv.so" > /etc/php/8.2/mods-available/pdo_sqlsrv.ini && \
+    phpenmod sqlsrv pdo_sqlsrv
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
